@@ -1,5 +1,16 @@
 spring:
+  profiles:
+    active: ${PROFILE:local}
+  application:
+    name: library-service
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    generate-ddl: false
+    open-in-view: true
   datasource:
-    url: jdbc:mysql://localhost:3307/library_service
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+server:
+  servlet:
+    context-path: /library-service

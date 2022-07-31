@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+  datasource:
+    url: jdbc:mysql://localhost:3307/library_service
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+logging:
+  level:
+    org.hibernate.SQL: debug
