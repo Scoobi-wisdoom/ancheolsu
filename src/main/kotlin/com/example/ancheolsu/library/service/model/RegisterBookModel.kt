@@ -5,7 +5,7 @@ import com.example.ancheolsu.book.entity.Book
 data class RegisterBookModel(
     val title: String,
     val author: String,
-    val category: String,
+    val categoryName: String,
 ) {
     fun toEntity(): Book {
         return Book(

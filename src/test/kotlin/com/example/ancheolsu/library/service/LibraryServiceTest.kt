@@ -9,6 +9,7 @@ import com.example.ancheolsu.category.repository.CategoryRepository
 import com.example.ancheolsu.common.exception.BusinessException
 import com.example.ancheolsu.library.service.model.RegisterBookModel
 import com.example.ancheolsu.library.service.model.RegisterCategoryModel
+import com.example.ancheolsu.library.service.model.SearchBookByCategoryModel
 import com.example.ancheolsu.library.service.model.SearchBookModel
 import com.querydsl.core.types.Predicate
 import io.mockk.every
@@ -38,7 +39,7 @@ internal class LibraryServiceTest {
         val model = RegisterBookModel(
             title = "",
             author = "",
-            category = "",
+            categoryName = "",
         )
 
         assertThrows<BusinessException> {
@@ -70,13 +71,10 @@ internal class LibraryServiceTest {
             2L,
         )
 
-        val bookCategoryRelationOne = BookCategoryRelation(id = 0, bookId = 0, categoryId = 0)
-        val bookCategoryRelationTwo = BookCategoryRelation(id = 1, bookId = 1, categoryId = 0)
-        val bookCategoryRelationThree = BookCategoryRelation(id = 2, bookId = 1, categoryId = 1)
         every { bookCategoryRelationRepository.findAll(any<Predicate>()) } returns mutableListOf(
-            bookCategoryRelationOne,
-            bookCategoryRelationTwo,
-            bookCategoryRelationThree,
+            BookCategoryRelation(id = 0, bookId = 0, categoryId = 0),
+            BookCategoryRelation(id = 1, bookId = 1, categoryId = 0),
+            BookCategoryRelation(id = 2, bookId = 1, categoryId = 1),
         )
 
         val categoryOne = Category(id = 0, categoryName = one)
@@ -107,6 +105,51 @@ internal class LibraryServiceTest {
             { assertTrue(actual[1].borrowable == bookTwo.borrowable) },
             { assertTrue(actual[1].categories.size == 2) },
             { assertTrue(actual[1].categories == listOf(categoryOne.categoryName, categoryTwo.categoryName)) },
+        )
+    }
+
+    @Test
+    fun `메서드 searchBookByCategory 은 categoryName 으로 book 을 검색해 해당 category 를 가진 모든 book 을 반환한다`() {
+        val sharedCategory = Category(id = 0, categoryName = "shared")
+        every { categoryRepository.findByCategoryName(any()) } returns sharedCategory
+
+        val bookCategoryRelation = BookCategoryRelation(id = 0, bookId = 0, categoryId = sharedCategory.id)
+        every { bookCategoryRelationRepository.findAllByCategoryId(sharedCategory.id) } returns listOf(
+            bookCategoryRelation
+        )
+
+        val pageable = PageRequest.of(0, 10)
+        every { bookRepository.findAll(any<Predicate>(), any<Pageable>()) } returns PageImpl(
+            listOf(
+                Book(id = 0, author = "", title = "", borrowable = true),
+                Book(id = 1, author = "", title = "", borrowable = true),
+            ),
+            pageable,
+            2L,
+        )
+
+        every { bookCategoryRelationRepository.findAll(any<Predicate>()) } returns mutableListOf(
+            BookCategoryRelation(id = 0, bookId = 0, categoryId = sharedCategory.id),
+            BookCategoryRelation(id = 1, bookId = 1, categoryId = sharedCategory.id),
+            BookCategoryRelation(id = 2, bookId = 1, categoryId = 1),
+        )
+
+        every { categoryRepository.findAll(any<Predicate>()) } returns mutableListOf(
+            sharedCategory,
+            Category(id = 1, categoryName = ""),
+        )
+
+        val actual = libraryService.searchBookByCategory(
+            SearchBookByCategoryModel(
+                categoryName = sharedCategory.categoryName,
+                pageable = pageable,
+            )
+        ).toList()
+
+        assertAll(
+            { assertTrue(actual.size == 2) },
+            { assertTrue(actual[0].categories.contains(sharedCategory.categoryName)) },
+            { assertTrue(actual[1].categories.contains(sharedCategory.categoryName)) },
         )
     }
 }

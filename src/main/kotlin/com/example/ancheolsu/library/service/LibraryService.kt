@@ -16,6 +16,7 @@ import com.example.ancheolsu.library.service.model.RegisterBookModel
 import com.example.ancheolsu.library.service.model.RegisterBookResultModel
 import com.example.ancheolsu.library.service.model.RegisterCategoryModel
 import com.example.ancheolsu.library.service.model.RegisterCategoryResultModel
+import com.example.ancheolsu.library.service.model.SearchBookByCategoryModel
 import com.example.ancheolsu.library.service.model.SearchBookModel
 import com.example.ancheolsu.library.service.model.SearchBookResultModel
 import com.querydsl.core.BooleanBuilder
@@ -33,7 +34,7 @@ class LibraryService(
 ) {
     @Transactional
     fun registerBook(model: RegisterBookModel): RegisterBookResultModel {
-        val category = findValidCategoryName(model.category)
+        val category = findValidCategoryName(model.categoryName)
         val book = bookRepository.save(model.toEntity())
         saveBookCategoryRelation(book, category)
         return RegisterBookResultModel(book.id)
@@ -75,12 +76,41 @@ class LibraryService(
         )
     }
 
+    @Transactional(readOnly = true)
     fun searchBook(model: SearchBookModel): Page<SearchBookResultModel> {
-        val predicate = getPredicateFrom(model)
+        val predicate = getSearchBookPredicateFrom(model)
         val books = findAllBooksFrom(predicate, model.pageable)
-        val bookIds = books.map { it.id }.toList()
 
-        val bookCategoryRelations = findAllBookCategoryRelationFrom(bookIds)
+        return getSearchBookResultModels(books)
+    }
+
+    private fun getSearchBookPredicateFrom(model: SearchBookModel): BooleanBuilder {
+        val booleanBuilder = BooleanBuilder()
+        model.title?.let {
+            booleanBuilder.and(
+                QBook.book.title.eq(it)
+            )
+        }
+        model.author?.let {
+            booleanBuilder.and(
+                QBook.book.author.eq(it)
+            )
+        }
+        return booleanBuilder
+    }
+
+    private fun findAllBooksFrom(
+        predicate: BooleanBuilder,
+        pageable: Pageable
+    ): Page<Book> {
+        return bookRepository.findAll(predicate, pageable)
+    }
+
+    private fun getSearchBookResultModels(
+        books: Page<Book>
+    ): Page<SearchBookResultModel> {
+        val bookIds = books.map { it.id }.toList()
+        val bookCategoryRelations = findAllBookCategoryRelationByBookIds(bookIds)
         val bookIdToCategoryRelations = bookCategoryRelations.groupBy { it.bookId }
 
         val categoryIds = bookCategoryRelations.map { it.categoryId }
@@ -100,31 +130,28 @@ class LibraryService(
         }
     }
 
-    private fun getPredicateFrom(model: SearchBookModel): BooleanBuilder {
-        val booleanBuilder = BooleanBuilder()
-        model.title?.let {
-            booleanBuilder.and(
-                QBook.book.title.eq(model.title)
-            )
-        }
-        model.author?.let {
-            booleanBuilder.and(
-                QBook.book.author.eq(model.author)
-            )
-        }
-        return booleanBuilder
-    }
-
-    private fun findAllBooksFrom(
-        predicate: BooleanBuilder,
-        pageable: Pageable
-    ): Page<Book> {
-        return bookRepository.findAll(predicate, pageable)
-    }
-
-    private fun findAllBookCategoryRelationFrom(bookIds: List<BookId>): MutableIterable<BookCategoryRelation> =
+    private fun findAllBookCategoryRelationByBookIds(bookIds: List<BookId>): MutableIterable<BookCategoryRelation> =
         bookCategoryRelationRepository.findAll(QBookCategoryRelation.bookCategoryRelation.bookId.`in`(bookIds))
 
     private fun findAllCategoriesFrom(categoryIds: List<CategoryId>): MutableIterable<Category> =
         categoryRepository.findAll(QCategory.category.id.`in`(categoryIds))
+
+    @Transactional(readOnly = true)
+    fun searchBookByCategory(model: SearchBookByCategoryModel): Page<SearchBookResultModel> {
+        val category = findValidCategoryName(model.categoryName)
+        val bookCategoryRelations = findAllBookCategoryRelationByCategoryId(category.id)
+        val bookIds = bookCategoryRelations.map { it.bookId }.distinct()
+        val books = findAllBooksByIds(bookIds = bookIds, pageable = model.pageable)
+
+        return getSearchBookResultModels(books)
+    }
+
+    private fun findAllBooksByIds(
+        bookIds: List<BookId>,
+        pageable: Pageable
+    ) = bookRepository.findAll(QBook.book.id.`in`(bookIds), pageable)
+
+    private fun findAllBookCategoryRelationByCategoryId(categoryId: CategoryId): List<BookCategoryRelation> {
+        return bookCategoryRelationRepository.findAllByCategoryId(categoryId)
+    }
 }
