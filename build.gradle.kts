@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
     kotlin("kapt") version kotlinVersion
+    id("org.jetbrains.kotlin.plugin.jpa") version kotlinVersion
 }
 
 group = "com.example"
