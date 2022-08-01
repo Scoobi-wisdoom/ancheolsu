@@ -1,0 +1,224 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080/library-service
+  description: Generated server url
+paths:
+  /category:
+    post:
+      tags:
+      - library-controller
+      operationId: registerCategory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterCategoryRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/RegisterCategoryResponse'
+  /book:
+    get:
+      tags:
+      - library-controller
+      operationId: searchBook
+      parameters:
+      - name: title
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: author
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Pageable'
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageSearchBookResponse'
+    post:
+      tags:
+      - library-controller
+      operationId: registerBook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBookRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/RegisterBookResponse'
+  /book/category:
+    get:
+      tags:
+      - library-controller
+      operationId: searchBookByCategory
+      parameters:
+      - name: category
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Pageable'
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageSearchBookResponse'
+components:
+  schemas:
+    RegisterCategoryRequest:
+      required:
+      - categoryName
+      type: object
+      properties:
+        categoryName:
+          type: string
+    RegisterCategoryResponse:
+      required:
+      - categoryId
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+    RegisterBookRequest:
+      required:
+      - author
+      - categoryName
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        categoryName:
+          type: string
+    RegisterBookResponse:
+      required:
+      - bookId
+      type: object
+      properties:
+        bookId:
+          type: integer
+          format: int64
+    Pageable:
+      type: object
+      properties:
+        page:
+          minimum: 0
+          type: integer
+          format: int32
+        size:
+          minimum: 1
+          type: integer
+          format: int32
+        sort:
+          type: array
+          items:
+            type: string
+    PageSearchBookResponse:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: '#/components/schemas/Sort'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchBookResponse'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        sort:
+          $ref: '#/components/schemas/Sort'
+        offset:
+          type: integer
+          format: int64
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    SearchBookResponse:
+      required:
+      - author
+      - borrowable
+      - categories
+      - title
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+        author:
+          type: string
+        title:
+          type: string
+        borrowable:
+          type: boolean
+    Sort:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        unsorted:
+          type: boolean
+        sorted:
+          type: boolean
