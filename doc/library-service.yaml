@@ -112,7 +112,7 @@ components:
     RegisterBookRequest:
       required:
       - author
-      - categoryName
+      - categoryNames
       - title
       type: object
       properties:
@@ -120,8 +120,11 @@ components:
           type: string
         author:
           type: string
-        categoryName:
-          type: string
+        categoryNames:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
     RegisterBookResponse:
       required:
       - bookId
@@ -154,11 +157,11 @@ components:
         totalElements:
           type: integer
           format: int64
+        sort:
+          $ref: '#/components/schemas/Sort'
         number:
           type: integer
           format: int32
-        sort:
-          $ref: '#/components/schemas/Sort'
         first:
           type: boolean
         last:
@@ -170,11 +173,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SearchBookResponse'
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
         numberOfElements:
           type: integer
           format: int32
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
         empty:
           type: boolean
     PageableObject:
@@ -218,7 +221,7 @@ components:
       properties:
         empty:
           type: boolean
-        unsorted:
-          type: boolean
         sorted:
+          type: boolean
+        unsorted:
           type: boolean
