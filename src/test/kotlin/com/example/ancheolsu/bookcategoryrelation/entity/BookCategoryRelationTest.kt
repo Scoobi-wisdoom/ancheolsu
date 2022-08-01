@@ -11,11 +11,11 @@ internal class BookCategoryRelationTest {
     fun from() {
         val bookCategoryRelation = BookCategoryRelation.from(
             book = Book(id = 0, author = "", title = "", borrowable = false),
-            category = Category(id = 1, categoryName = "")
+            categories = listOf(Category(id = 1, categoryName = ""))
         )
         assertAll(
-            { assertTrue(bookCategoryRelation.bookId == 0L) },
-            { assertTrue(bookCategoryRelation.categoryId == 1L) },
+            { assertTrue(bookCategoryRelation[0].bookId == 0L) },
+            { assertTrue(bookCategoryRelation[0].categoryId == 1L) },
         )
     }
 }

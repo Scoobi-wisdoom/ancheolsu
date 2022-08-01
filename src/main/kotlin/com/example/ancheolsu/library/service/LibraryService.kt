@@ -34,29 +34,31 @@ class LibraryService(
 ) {
     @Transactional
     fun registerBook(model: RegisterBookModel): RegisterBookResultModel {
-        val category = findValidCategoryName(model.categoryName)
+        val categories = findValidCategoryNames(model.categoryNames)
         val book = bookRepository.save(model.toEntity())
-        saveBookCategoryRelation(book, category)
+        saveBookCategoryRelation(book, categories)
         return RegisterBookResultModel(book.id)
     }
 
-    private fun findValidCategoryName(categoryName: String): Category {
-        return findByCategoryName(categoryName) ?: throw BusinessException(
-            message = "category $categoryName does not exist.",
+    private fun findValidCategoryNames(categoryNames: Set<String>): List<Category> {
+        val categories = findAllByCategoryNames(categoryNames)
+        val notExistingCategoryNames = categoryNames - categories.map { it.categoryName }.toSet()
+        return if (notExistingCategoryNames.isEmpty()) categories else throw BusinessException(
+            message = "non existent categories: $notExistingCategoryNames",
             cause = null,
             httpStatus = BAD_REQUEST,
         )
     }
 
-    private fun findByCategoryName(categoryName: String): Category? {
-        return categoryRepository.findByCategoryName(categoryName)
+    private fun findAllByCategoryNames(categoryNames: Set<String>): List<Category> {
+        return categoryRepository.findAll(QCategory.category.categoryName.`in`(categoryNames)).toList()
     }
 
     private fun saveBookCategoryRelation(
         book: Book,
-        category: Category,
+        categories: List<Category>,
     ) {
-        bookCategoryRelationRepository.save(BookCategoryRelation.from(book, category))
+        bookCategoryRelationRepository.saveAll(BookCategoryRelation.from(book, categories))
     }
 
     @Transactional
@@ -74,6 +76,10 @@ class LibraryService(
             cause = null,
             httpStatus = BAD_REQUEST,
         )
+    }
+
+    private fun findByCategoryName(categoryName: String): Category? {
+        return categoryRepository.findByCategoryName(categoryName)
     }
 
     @Transactional(readOnly = true)
@@ -144,6 +150,14 @@ class LibraryService(
         val books = findAllBooksByIds(bookIds = bookIds, pageable = model.pageable)
 
         return getSearchBookResultModels(books)
+    }
+
+    private fun findValidCategoryName(categoryName: String): Category {
+        return findByCategoryName(categoryName) ?: throw BusinessException(
+            message = "category $categoryName does not exist.",
+            cause = null,
+            httpStatus = BAD_REQUEST,
+        )
     }
 
     private fun findAllBooksByIds(

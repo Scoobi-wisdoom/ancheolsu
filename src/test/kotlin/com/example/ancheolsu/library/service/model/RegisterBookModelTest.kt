@@ -13,7 +13,7 @@ internal class RegisterBookModelTest {
         val model = RegisterBookModel(
             title = title,
             author = author,
-            categoryName = category
+            categoryNames = setOf(category)
         )
         val entity = model.toEntity()
 

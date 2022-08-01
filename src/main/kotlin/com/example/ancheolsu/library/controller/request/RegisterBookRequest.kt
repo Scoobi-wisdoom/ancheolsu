@@ -5,13 +5,13 @@ import com.example.ancheolsu.library.service.model.RegisterBookModel
 data class RegisterBookRequest(
     val title: String,
     val author: String,
-    val categoryName: String,
+    val categoryNames: Set<String>,
 ) {
     fun toModel(): RegisterBookModel {
         return RegisterBookModel(
             title = title,
             author = author,
-            categoryName = categoryName
+            categoryNames = categoryNames
         )
     }
 }

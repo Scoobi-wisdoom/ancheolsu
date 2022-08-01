@@ -19,11 +19,13 @@ class BookCategoryRelation(
     val categoryId: CategoryId,
 ) : BaseEntity() {
     companion object {
-        fun from(book: Book, category: Category): BookCategoryRelation {
-            return BookCategoryRelation(
-                bookId = book.id,
-                categoryId = category.id
-            )
+        fun from(book: Book, categories: List<Category>): List<BookCategoryRelation> {
+            return categories.map {
+                BookCategoryRelation(
+                    bookId = book.id,
+                    categoryId = it.id,
+                )
+            }
         }
     }
 }

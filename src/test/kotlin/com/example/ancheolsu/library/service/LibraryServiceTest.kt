@@ -35,11 +35,11 @@ internal class LibraryServiceTest {
 
     @Test
     fun `메서드 registerBook 이 받는 인자 중에는 category 가 있는데 이 category 가 Category 테이블에 없으면 BusinessException 이 발생한다`() {
-        every { categoryRepository.findByCategoryName(any()) } returns null
+        every { categoryRepository.findAll(any<Predicate>()) } returns listOf()
         val model = RegisterBookModel(
             title = "",
             author = "",
-            categoryName = "",
+            categoryNames = setOf(""),
         )
 
         assertThrows<BusinessException> {
